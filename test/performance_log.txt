@@ -1,0 +1,9 @@
+[Day 1 – Webcam FPS Test]
+- Device: Laptop Webcam
+- Lighting 1 (Bright): 30.2 FPS (average)
+- Lighting 2 (Dim): 29.7 FPS (average)
+- Observations:
+  • No major FPS drop under dim lighting
+  • Startup dip (once): 4.90 FPS — ignored in avg
+  • Webcam runs smoothly and reliably
+- Status: ✅ Ready for Day 2 tests
