@@ -1,5 +1,5 @@
 import cv2
-from face_eye_detection import detect_face_landmarks  
+from detection.face_eye_detection import detect_face_landmarks  
 import time
 
 
