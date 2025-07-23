@@ -1,4 +1,5 @@
 import cv2
+import winsound
 from detection.face_eye_detection import detect_face_landmarks
 from ui.overlay import draw_ui_overlay
 
@@ -47,6 +48,11 @@ def main():
 
         # Optional: Print EAR & status for debugging
         print(f"EAR: {ear}, Eyes Closed: {eyes_closed}, Status: {status}")
+
+        # Play beep alert when driver is detected as drowsy
+        if status == "Drowsy":
+              winsound.Beep(1000, 500)  # frequency=1000 Hz, duration=500 ms
+
 
         # Step 4: Overlay UI
         frame = draw_ui_overlay(frame, status)
