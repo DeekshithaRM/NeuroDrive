@@ -6,7 +6,8 @@ import os
 
 def play_alarm():
     pygame.mixer.init()
-    alarm_path = os.path.join("assets", "alert.wav")
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    alarm_path = os.path.join(BASE_DIR, "assets", "alert.wav")
     pygame.mixer.music.load(alarm_path)
     pygame.mixer.music.play()
 
