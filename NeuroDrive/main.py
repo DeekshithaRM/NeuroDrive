@@ -46,7 +46,7 @@ def main():
         status, closed_count = get_driver_status(eyes_closed, closed_count)
 
         # Optional: Print EAR & status for debugging
-        print(f"EAR: {ear:.2f}" if ear else "No face", "| Status:", status)
+        print(f"EAR: {ear}, Eyes Closed: {eyes_closed}, Status: {status}")
 
         # Step 4: Overlay UI
         frame = draw_ui_overlay(frame, status)
