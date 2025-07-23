@@ -1,75 +1,60 @@
-
-
-from detection.face_eye_detection import detect_face_landmarks
-from ui.overlay import draw_ui_overlay  # Your function
 import cv2
+from detection.face_eye_detection import detect_face_landmarks
+from ui.overlay import draw_ui_overlay
 
-# Simulated eye status sequence (False = closed, True = open)
-simulated_eye_states = [False, True, True, True, False, False, True]
-frame_index = 0
+# Thresholds
+CLOSED_EAR_THRESHOLD = 0.25  # below this = eyes closed
+CONSEC_FRAMES_THRESHOLD = 20  # ~2 sec if ~10 fps
+
+# State variables
 closed_count = 0
-threshold = 2  # Number of consecutive closed-eye frames to be considered drowsy
 
 def get_driver_status(eyes_closed, closed_count):
     """
-    Returns current driver status based on eye state and closed count.
+    Updates closed eye frame count and returns current status.
     """
     if eyes_closed:
         closed_count += 1
-        if closed_count >= threshold:
+        if closed_count >= CONSEC_FRAMES_THRESHOLD:
             return "Drowsy", closed_count
     else:
         closed_count = 0
     return "Active", closed_count
 
 def main():
-    global frame_index, closed_count
-
+    global closed_count
     cap = cv2.VideoCapture(0)
 
     while True:
         ret, frame = cap.read()
         if not ret:
-             print("Failed to grab frame")
-             break
-
-        overlay = frame.copy()
-
-
-        # Face/eye landmark detection (optional visual overlay)
-        frame, ear = detect_face_landmarks(frame)
-
-
-      
-        # Use EAR threshold to determine if eyes are closed
-        if ear is not None:
-             eyes_closed = ear < 0.25
-        else:
-             eyes_closed = False
-
-
-        # Determine driver status
-        status, closed_count = get_driver_status(eyes_closed, closed_count)
-
-        # Run UI overlay display
-        color = (0, 255, 0) if status == "Active" else (0, 0, 255)
-
-        # --- Overlay logic directly here instead of inside overlay.py ---
-        banner_height = 60
-        overlay = frame.copy()
-        cv2.rectangle(overlay, (0, 0), (frame.shape[1], banner_height), (50, 50, 50), -1)
-        alpha = 0.6
-        cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
-        cv2.circle(frame, (50, 30), 20, color, -1)
-        cv2.putText(frame, f"Driver Status: {status}", (90, 40),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
-
-        # Show frame
-        cv2.imshow('Driver Monitor', frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+            print("Failed to grab frame")
             break
 
-        frame_index += 1
+        overlay = frame.copy()
+
+        # Step 1: Get EAR from face landmarks
+        frame, ear = detect_face_landmarks(overlay)
+
+        # Step 2: Use EAR to determine if eyes are closed
+        if ear is not None:
+            eyes_closed = ear < CLOSED_EAR_THRESHOLD
+        else:
+            eyes_closed = False  # no face, assume awake
+
+        # Step 3: Get driver status
+        status, closed_count = get_driver_status(eyes_closed, closed_count)
+
+        # Optional: Print EAR & status for debugging
+        print(f"EAR: {ear:.2f}" if ear else "No face", "| Status:", status)
+
+        # Step 4: Overlay UI
+        frame = draw_ui_overlay(frame, status)
+
+        # Step 5: Show frame
+        cv2.imshow("Driver Monitor", frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
     cap.release()
     cv2.destroyAllWindows()
