@@ -40,11 +40,13 @@ def main():
         frame, ear = detect_face_landmarks(frame)
 
 
-        # Simulated eye state
-        if frame_index < len(simulated_eye_states):
-            eyes_closed = not simulated_eye_states[frame_index]  # False means eyes are open
+      
+        # Use EAR threshold to determine if eyes are closed
+        if ear is not None:
+             eyes_closed = ear < 0.25
         else:
-            eyes_closed = False
+             eyes_closed = False
+
 
         # Determine driver status
         status, closed_count = get_driver_status(eyes_closed, closed_count)
