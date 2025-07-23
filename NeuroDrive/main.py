@@ -1,7 +1,15 @@
 import cv2
-import winsound
 from detection.face_eye_detection import detect_face_landmarks
 from ui.overlay import draw_ui_overlay
+import pygame
+import os
+
+def play_alarm():
+    pygame.mixer.init()
+    alarm_path = os.path.join("assets", "alert.wav")
+    pygame.mixer.music.load(alarm_path)
+    pygame.mixer.music.play()
+
 
 # Thresholds
 CLOSED_EAR_THRESHOLD = 0.25  # below this = eyes closed
@@ -51,8 +59,10 @@ def main():
 
         # Play beep alert when driver is detected as drowsy
         if status == "Drowsy":
-              winsound.Beep(1000, 500)  # frequency=1000 Hz, duration=500 ms
-
+            draw_ui_overlay(frame, status="Drowsy")
+            play_alarm()
+        else:
+            draw_ui_overlay(frame, status="Active")
 
         # Step 4: Overlay UI
         frame = draw_ui_overlay(frame, status)
