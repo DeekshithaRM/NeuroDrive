@@ -30,10 +30,15 @@ def main():
     while True:
         ret, frame = cap.read()
         if not ret:
-            break
+             print("Failed to grab frame")
+             break
+
+        overlay = frame.copy()
+
 
         # Face/eye landmark detection (optional visual overlay)
-        frame = detect_face_landmarks(frame)
+        frame, ear = detect_face_landmarks(frame)
+
 
         # Simulated eye state
         if frame_index < len(simulated_eye_states):
