@@ -32,7 +32,9 @@ def get_ear(landmarks):
     right = [landmarks[i] for i in RIGHT_EYE]
     right_ear = (euclidean(right[1], right[5]) + euclidean(right[2], right[4])) / (2.0 * euclidean(right[0], right[3]))
 
-    return (left_ear + right_ear) / 2.0
+    return left_ear, right_ear
+
+
 
 def detect_face_landmarks(frame):
     h, w = frame.shape[:2]
@@ -50,6 +52,8 @@ def detect_face_landmarks(frame):
                 drawing_spec
             )
 
-            ear = get_ear(landmarks.landmark)  # Compute EAR
+            left_ear, right_ear = get_ear(landmarks.landmark)
+            ear = (left_ear, right_ear)
+
 
     return frame, ear
