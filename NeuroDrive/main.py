@@ -1,7 +1,7 @@
 
 
 from detection.face_eye_detection import detect_face_landmarks
-from Ui.overlay import draw_ui_overlay  # Your function
+from ui.overlay import draw_ui_overlay  # Your function
 import cv2
 
 # Simulated eye status sequence (False = closed, True = open)
