@@ -24,22 +24,22 @@ def euclidean(p1, p2):
     return math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2)
 
 def get_ear(landmarks):
-    # Left Eye
+    # left eye
     left = [landmarks[i] for i in LEFT_EYE]
     left_ear = (euclidean(left[1], left[5]) + euclidean(left[2], left[4])) / (2.0 * euclidean(left[0], left[3]))
 
-    # Right Eye
+    # right eye
     right = [landmarks[i] for i in RIGHT_EYE]
     right_ear = (euclidean(right[1], right[5]) + euclidean(right[2], right[4])) / (2.0 * euclidean(right[0], right[3]))
 
-    return (left_ear + right_ear) / 2.0
+    return round(left_ear, 3), round(right_ear, 3)
 
 def detect_face_landmarks(frame):
     h, w = frame.shape[:2]
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results = face_mesh.process(rgb_frame)
 
-    ear = None
+    left_ear, right_ear = None, None
     if results.multi_face_landmarks:
         for landmarks in results.multi_face_landmarks:
             # Draw landmarks on the frame
@@ -51,11 +51,11 @@ def detect_face_landmarks(frame):
                 drawing_spec
             )
 
-            # Compute EAR
-            ear = round(get_ear(landmarks.landmark), 3)
+            # Compute both EARs
+            left_ear, right_ear = get_ear(landmarks.landmark)
 
-            # show EAR on frame
-            cv2.putText(frame, f"EAR: {ear}", (10, 30),
+            # Show both EARs on frame
+            cv2.putText(frame, f"L-EAR: {left_ear:.3f}  R-EAR: {right_ear:.3f}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
-    return frame, ear
+    return frame, (left_ear, right_ear)

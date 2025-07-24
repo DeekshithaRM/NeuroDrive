@@ -9,18 +9,18 @@ def play_alarm():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     alarm_path = os.path.join(BASE_DIR, "assets", "alert.wav")
     pygame.mixer.music.load(alarm_path)
-    pygame.mixer.music.play(-1)  # Play in loop
+    pygame.mixer.music.play(-1)  # loop
 
 def stop_alarm():
     pygame.mixer.music.stop()
 
 # Thresholds
-CLOSED_EAR_THRESHOLD = 0.25  # below this = eyes closed
-CONSEC_FRAMES_THRESHOLD = 20  # ~2 sec if ~10 fps
+CLOSED_EAR_THRESHOLD = 0.25
+CONSEC_FRAMES_THRESHOLD = 20  # adjust based on FPS
 
 # State variables
 closed_count = 0
-alarm_playing = False  # <-- added flag
+alarm_playing = False
 
 def get_driver_status(eyes_closed, closed_count):
     """
@@ -46,22 +46,26 @@ def main():
 
         overlay = frame.copy()
 
-        # Step 1: Get EAR from face landmarks
-        frame, ear = detect_face_landmarks(overlay)
+        # Step 1: Get left and right EAR
+        frame, left_ear, right_ear = detect_face_landmarks(overlay)
 
-        # Step 2: Use EAR to determine if eyes are closed
-        if ear is not None:
-            eyes_closed = ear < CLOSED_EAR_THRESHOLD
+        # Step 2: Check if both eyes are closed
+        if left_ear is not None and right_ear is not None:
+            eyes_closed = (
+                left_ear < CLOSED_EAR_THRESHOLD and right_ear < CLOSED_EAR_THRESHOLD
+            )
         else:
-            eyes_closed = False  # no face, assume awake
+            eyes_closed = False  # if landmarks not detected
 
         # Step 3: Get driver status
         status, closed_count = get_driver_status(eyes_closed, closed_count)
 
         # Debug info
-        print(f"EAR: {ear}, Eyes Closed: {eyes_closed}, Status: {status}")
+        print(
+            f"L_EAR: {left_ear}, R_EAR: {right_ear}, Eyes Closed: {eyes_closed}, Status: {status}"
+        )
 
-        # Step 4: Handle alert logic
+        # Step 4: Handle alarm logic
         if status == "Drowsy":
             if not alarm_playing:
                 play_alarm()
@@ -81,7 +85,7 @@ def main():
 
     cap.release()
     cv2.destroyAllWindows()
-    stop_alarm()  # In case the alarm was playing when quitting
+    stop_alarm()
 
 if __name__ == "__main__":
     main()
