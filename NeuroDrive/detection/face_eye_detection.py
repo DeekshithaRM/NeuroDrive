@@ -42,6 +42,7 @@ def detect_face_landmarks(frame):
     ear = None
     if results.multi_face_landmarks:
         for landmarks in results.multi_face_landmarks:
+            # Draw landmarks on the frame
             mp_drawing.draw_landmarks(
                 frame,
                 landmarks,
@@ -50,6 +51,11 @@ def detect_face_landmarks(frame):
                 drawing_spec
             )
 
-            ear = get_ear(landmarks.landmark)  # Compute EAR
+            # Compute EAR
+            ear = round(get_ear(landmarks.landmark), 3)
+
+            # show EAR on frame
+            cv2.putText(frame, f"EAR: {ear}", (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
     return frame, ear

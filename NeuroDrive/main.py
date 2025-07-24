@@ -9,8 +9,10 @@ def play_alarm():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     alarm_path = os.path.join(BASE_DIR, "assets", "alert.wav")
     pygame.mixer.music.load(alarm_path)
-    pygame.mixer.music.play()
+    pygame.mixer.music.play(-1)  # Play in loop
 
+def stop_alarm():
+    pygame.mixer.music.stop()
 
 # Thresholds
 CLOSED_EAR_THRESHOLD = 0.25  # below this = eyes closed
@@ -18,6 +20,7 @@ CONSEC_FRAMES_THRESHOLD = 20  # ~2 sec if ~10 fps
 
 # State variables
 closed_count = 0
+alarm_playing = False  # <-- added flag
 
 def get_driver_status(eyes_closed, closed_count):
     """
@@ -32,7 +35,7 @@ def get_driver_status(eyes_closed, closed_count):
     return "Active", closed_count
 
 def main():
-    global closed_count
+    global closed_count, alarm_playing
     cap = cv2.VideoCapture(0)
 
     while True:
@@ -55,26 +58,30 @@ def main():
         # Step 3: Get driver status
         status, closed_count = get_driver_status(eyes_closed, closed_count)
 
-        # Optional: Print EAR & status for debugging
+        # Debug info
         print(f"EAR: {ear}, Eyes Closed: {eyes_closed}, Status: {status}")
 
-        # Play beep alert when driver is detected as drowsy
+        # Step 4: Handle alert logic
         if status == "Drowsy":
-            draw_ui_overlay(frame, status="Drowsy")
-            play_alarm()
+            if not alarm_playing:
+                play_alarm()
+                alarm_playing = True
         else:
-            draw_ui_overlay(frame, status="Active")
+            if alarm_playing:
+                stop_alarm()
+                alarm_playing = False
 
-        # Step 4: Overlay UI
+        # Step 5: Overlay UI
         frame = draw_ui_overlay(frame, status)
 
-        # Step 5: Show frame
+        # Step 6: Show frame
         cv2.imshow("Driver Monitor", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     cap.release()
     cv2.destroyAllWindows()
+    stop_alarm()  # In case the alarm was playing when quitting
 
 if __name__ == "__main__":
     main()
