@@ -47,7 +47,7 @@ def main():
         overlay = frame.copy()
 
         # Step 1: Get left and right EAR
-        frame, left_ear, right_ear = detect_face_landmarks(overlay)
+        frame, (left_ear, right_ear) = detect_face_landmarks(overlay)
 
         # Step 2: Check if both eyes are closed
         if left_ear is not None and right_ear is not None:
