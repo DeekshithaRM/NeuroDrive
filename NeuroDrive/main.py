@@ -37,9 +37,10 @@ def main():
     global closed_count, alarm_playing
     cap = cv2.VideoCapture(0)
 
-    # For FPS calculation
+    # FPS tracking
     prev_time = time.time()
     smoothed_fps = 0
+    fps_values = []  # Store FPS to calculate average later
 
     while True:
         ret, frame = cap.read()
@@ -63,11 +64,15 @@ def main():
             status = "No Face"
             eyes_closed = False
             draw_ui_overlay(frame, status=status)
-            # Skip alarm and show frame
+
+            # FPS calculation even when face not detected
             current_time = time.time()
             fps = 1.0 / (current_time - prev_time)
             prev_time = current_time
-            smoothed_fps = 0.9 * smoothed_fps + 0.1 * fps  # smooth
+            smoothed_fps = 0.9 * smoothed_fps + 0.1 * fps
+            fps_values.append(fps)
+
+            # Show FPS
             cv2.putText(frame, f"FPS: {smoothed_fps:.1f}", (10, 65),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
             cv2.imshow("Driver Monitor", frame)
@@ -87,11 +92,14 @@ def main():
                 stop_alarm()
                 alarm_playing = False
 
-        # Step 3: FPS calculation & display
+        # Step 3: FPS calculation and tracking
         current_time = time.time()
         fps = 1.0 / (current_time - prev_time)
         prev_time = current_time
-        smoothed_fps = 0.9 * smoothed_fps + 0.1 * fps  # exponential moving average
+        smoothed_fps = 0.9 * smoothed_fps + 0.1 * fps
+        fps_values.append(fps)
+
+        # Show FPS on frame
         cv2.putText(frame, f"FPS: {smoothed_fps:.1f}", (10, 65),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
 
@@ -104,6 +112,11 @@ def main():
     cap.release()
     cv2.destroyAllWindows()
     stop_alarm()
+
+    # Print average FPS
+    if fps_values:
+        avg_fps = sum(fps_values) / len(fps_values)
+        print(f"\nAverage FPS during session: {avg_fps:.2f}")
 
 if __name__ == "__main__":
     main()
