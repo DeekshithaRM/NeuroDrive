@@ -1,10 +1,13 @@
+[Day 1 – Webcam FPS Test]
+- Device: Laptop Webcam
+- Lighting 1 (Bright): 30.2 FPS (average)
+- Lighting 2 (Dim): 29.7 FPS (average)
+- Observations:
+  • No major FPS drop under dim lighting
+  • Startup dip (once): 4.90 FPS — ignored in avg
+  • Webcam runs smoothly and reliably
+- Status: ✅ Ready for Day 2 tests
 
-  • Face and eye detection consistent in both lighting conditions
-  • 
-- Detection Status:
-  • Eyes: ✅ Detected accurately
-  • Face: ✅ Stable
-- Status: ✅ Passed baseline detection tests; ready for Day 3 integration
 
 [Day 2 – Face & Eye Detection Test]
 - Device: Laptop Webcam
