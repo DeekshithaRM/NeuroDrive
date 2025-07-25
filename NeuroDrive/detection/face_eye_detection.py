@@ -83,8 +83,9 @@ def detect_face_landmarks(frame):
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results = face_mesh.process(rgb_frame)
 
-    ear = None
-    distraction_status = "Unknown"
+    left_ear = None  # <-- initialize safely
+    right_ear = None
+    distraction_status = "No Face Detected"
 
     if results.multi_face_landmarks:
         for landmarks in results.multi_face_landmarks:
@@ -96,17 +97,24 @@ def detect_face_landmarks(frame):
                 drawing_spec
             )
 
-            left_ear, right_ear = get_ear(landmarks.landmark)
+            # Compute EARs separately
+            left = [landmarks.landmark[i] for i in LEFT_EYE]
+            right = [landmarks.landmark[i] for i in RIGHT_EYE]
+
+            left_ear = (euclidean(left[1], left[5]) + euclidean(left[2], left[4])) / (2.0 * euclidean(left[0], left[3]))
+            right_ear = (euclidean(right[1], right[5]) + euclidean(right[2], right[4])) / (2.0 * euclidean(right[0], right[3]))
+
+            # Optional rounding
             left_ear = round(left_ear, 3)
             right_ear = round(right_ear, 3)
 
-            cv2.putText(frame, f"EAR: {ear}", (10, 30),
+            # EAR overlay
+            cv2.putText(frame, f"L: {left_ear} R: {right_ear}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
-            # Head pose analysis
+            # Head pose
             pitch, yaw, roll = get_head_pose_angles(frame, landmarks.landmark)
 
-            # Simple distraction logic
             if abs(yaw) > 15:
                 distraction_status = "Looking Sideways"
             elif pitch > 10:
@@ -114,11 +122,9 @@ def detect_face_landmarks(frame):
             else:
                 distraction_status = "Looking Forward"
 
-            # Show angles
+            # Show on frame
             cv2.putText(frame, f"Yaw: {round(yaw,1)} Pitch: {round(pitch,1)}",
                         (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 255), 2)
-
-            # Show distraction status
             cv2.putText(frame, f"Pose: {distraction_status}", (10, 90),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
 
