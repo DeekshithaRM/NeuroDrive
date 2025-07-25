@@ -75,8 +75,13 @@ def main():
                 stop_alarm()
                 alarm_playing = False
 
-        # Step 5: Overlay UI
-        frame = draw_ui_overlay(frame, status)
+        # Step 5: Overlay UI with EAR
+        if left_ear is not None and right_ear is not None:
+            avg_ear = (left_ear + right_ear) / 2
+        else:
+            avg_ear = None
+
+        frame = draw_ui_overlay(frame, status, avg_ear)
 
         # Step 6: Show frame
         cv2.imshow("Driver Monitor", frame)
@@ -88,4 +93,4 @@ def main():
     stop_alarm()
 
 if __name__ == "__main__":
-    main()
+    main()  
