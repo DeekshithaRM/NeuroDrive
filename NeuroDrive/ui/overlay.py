@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from datetime import datetime
 
-def draw_ui_overlay(frame, status="Drowsy", avg_ear=None, distraction_status=None):
+def draw_ui_overlay(frame, status="Distracted", avg_ear=None, distraction_status=None):
     color = (0, 255, 0) if status == "Active" else (0, 0, 255)
 
     # Banner overlay
