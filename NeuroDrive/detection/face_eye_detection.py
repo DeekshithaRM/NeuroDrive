@@ -41,7 +41,7 @@ def get_ear(landmarks):
     left_ear = (euclidean(left[1], left[5]) + euclidean(left[2], left[4])) / (2.0 * euclidean(left[0], left[3]))
     right_ear = (euclidean(right[1], right[5]) + euclidean(right[2], right[4])) / (2.0 * euclidean(right[0], right[3]))
 
-    return (left_ear + right_ear) / 2.0
+    return left_ear, right_ear
 
 def get_head_pose_angles(frame, landmarks):
     h, w = frame.shape[:2]
@@ -96,7 +96,10 @@ def detect_face_landmarks(frame):
                 drawing_spec
             )
 
-            ear = round(get_ear(landmarks.landmark), 3)
+            left_ear, right_ear = get_ear(landmarks.landmark)
+            left_ear = round(left_ear, 3)
+            right_ear = round(right_ear, 3)
+
             cv2.putText(frame, f"EAR: {ear}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
@@ -119,4 +122,4 @@ def detect_face_landmarks(frame):
             cv2.putText(frame, f"Pose: {distraction_status}", (10, 90),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
 
-    return frame, ear, distraction_status
+    return frame, left_ear, right_ear, distraction_status
