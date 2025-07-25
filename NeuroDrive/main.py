@@ -4,19 +4,31 @@ from ui.overlay import draw_ui_overlay
 import pygame
 import os
 
+# ---------- Alarm Setup ----------
 def play_alarm():
-    pygame.mixer.init()
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    alarm_path = os.path.join(BASE_DIR, "assets", "alert.wav")
-    pygame.mixer.music.load(alarm_path)
-    pygame.mixer.music.play(-1)
+    try:
+        pygame.mixer.init()
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        alarm_path = os.path.join(BASE_DIR, "assets", "alert.wav")
+        print("[DEBUG] Loading alarm:", alarm_path)
+        pygame.mixer.music.load(alarm_path)
+        pygame.mixer.music.play(-1)
+        print("[DEBUG] Alarm playing...")
+    except Exception as e:
+        print("[ERROR] Failed to play alarm:", e)
 
 def stop_alarm():
-    pygame.mixer.music.stop()
+    try:
+        pygame.mixer.music.stop()
+        print("[DEBUG] Alarm stopped.")
+    except Exception as e:
+        print("[ERROR] Failed to stop alarm:", e)
 
+# ---------- Constants ----------
 CLOSED_EAR_THRESHOLD = 0.25
 CONSEC_FRAMES_THRESHOLD = 20
 
+# ---------- Globals ----------
 closed_count = 0
 alarm_playing = False
 
@@ -36,36 +48,43 @@ def main():
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("Failed to grab frame")
+            print("[ERROR] Failed to grab frame")
             break
 
         overlay = frame.copy()
 
+        # Face detection & EAR
         frame, left_ear, right_ear, distraction_status = detect_face_landmarks(overlay)
 
-        if left_ear is not None and right_ear is not None:
-            eyes_closed = left_ear < CLOSED_EAR_THRESHOLD and right_ear < CLOSED_EAR_THRESHOLD
-        else:
-            eyes_closed = False
-
-        status, closed_count = get_driver_status(eyes_closed, closed_count)
-
-        print(f"L_EAR: {left_ear}, R_EAR: {right_ear}, Eyes Closed: {eyes_closed}, Status: {status}, Pose: {distraction_status}")
-
-        if status == "Drowsy":
-            if not alarm_playing:
-                play_alarm()
-                alarm_playing = True
-        else:
-            if alarm_playing:
-                stop_alarm()
-                alarm_playing = False
-
-        if left_ear is not None and right_ear is not None:
-            avg_ear = (left_ear + right_ear) / 2
-        else:
+        if left_ear is None or right_ear is None:
+            status = "No Face Detected"
             avg_ear = None
 
+            if not alarm_playing:
+                print("[DEBUG] No face detected — playing alarm.")
+                play_alarm()
+                alarm_playing = True
+
+        else:
+            eyes_closed = left_ear < CLOSED_EAR_THRESHOLD and right_ear < CLOSED_EAR_THRESHOLD
+            status, closed_count = get_driver_status(eyes_closed, closed_count)
+            avg_ear = (left_ear + right_ear) / 2
+
+            # Terminal print
+            print(f"L_EAR: {left_ear:.3f}, R_EAR: {right_ear:.3f}, Eyes Closed: {eyes_closed}, Status: {status}, Pose: {distraction_status}")
+
+            if status == "Drowsy":
+                if not alarm_playing:
+                    print("[DEBUG] Drowsy detected — playing alarm.")
+                    play_alarm()
+                    alarm_playing = True
+            else:
+                if alarm_playing:
+                    print("[DEBUG] Driver active — stopping alarm.")
+                    stop_alarm()
+                    alarm_playing = False
+
+        # ---------- UI ----------
         frame = draw_ui_overlay(frame, status, avg_ear, distraction_status)
 
         cv2.imshow("Driver Monitor", frame)
