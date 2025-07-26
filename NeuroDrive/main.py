@@ -50,7 +50,10 @@ def main():
     start_time = time.time()
     eye_closed_start = None
     # ------------------------------------------------------
+    # Add this above the while loop
 
+    last_drowsy_start_time = None
+    already_logged_drowsy = False
     while True:
         ret, frame = cap.read()
         if not ret:
