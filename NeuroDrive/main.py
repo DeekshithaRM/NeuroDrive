@@ -3,15 +3,14 @@ from detection.face_eye_detection import detect_face_landmarks
 from ui.overlay import draw_ui_overlay
 import pygame
 import os
-import time
-import argparse
 
-# -------------------- TEST MODE SETUP --------------------
-parser = argparse.ArgumentParser()
-parser.add_argument('--test', action='store_true', help="Enable testing logs (FPS, latency, drowsy trigger)")
-args = parser.parse_args()
-TESTING = args.test
-# --------------------------------------------------------
+pose_history = []
+def smooth_pose_status(new_status, history, window=5):
+    history.append(new_status)
+    if len(history) > window:
+        history.pop(0)
+    # Return most frequent recent status
+    return max(set(history), key=history.count)
 
 def play_alarm():
     try:
@@ -24,7 +23,8 @@ def play_alarm():
         print("Failed to play alarm:", e)
 
 def stop_alarm():
-    pygame.mixer.music.stop()
+    if pygame.mixer.get_init():
+        pygame.mixer.music.stop()
 
 CLOSED_EAR_THRESHOLD = 0.25
 CONSEC_FRAMES_THRESHOLD = 20
@@ -45,35 +45,27 @@ def main():
     global closed_count, alarm_playing
     cap = cv2.VideoCapture(0)
 
-    # -------------------- TEST METRICS --------------------
-    frame_count = 0
-    start_time = time.time()
-    eye_closed_start = None
-    # ------------------------------------------------------
-    # Add this above the while loop
-
-    last_drowsy_start_time = None
-    already_logged_drowsy = False
     while True:
         ret, frame = cap.read()
         if not ret:
             print("Failed to grab frame")
             break
 
-        if TESTING:
-            frame_start_time = time.time()
-
         overlay = frame.copy()
-        frame, left_ear, right_ear, distraction_status = detect_face_landmarks(overlay)
+        frame, left_ear, right_ear, avg_ear, distraction_status_raw = detect_face_landmarks(overlay)
+        distraction_status = smooth_pose_status(distraction_status_raw, pose_history)
+
 
         if left_ear is None or right_ear is None:
             status = "No Face Detected"
             avg_ear = None
+            distraction_status = "No Face Detected"
 
             if not alarm_playing:
                 play_alarm()
                 alarm_playing = True
         else:
+            avg_ear = (left_ear + right_ear) / 2
             eyes_closed = left_ear < CLOSED_EAR_THRESHOLD and right_ear < CLOSED_EAR_THRESHOLD
             status, closed_count = get_driver_status(eyes_closed, closed_count)
 
@@ -81,35 +73,15 @@ def main():
                 if not alarm_playing:
                     play_alarm()
                     alarm_playing = True
-
-                if TESTING and eye_closed_start is not None:
-                    drowsy_delay = time.time() - eye_closed_start
-                    print(f"[TEST] Drowsy triggered after {drowsy_delay:.2f} seconds")
-                    eye_closed_start = None  # Reset after trigger
-
             else:
                 if alarm_playing:
                     stop_alarm()
                     alarm_playing = False
 
-            # Track when eyes first close (for drowsy timing)
-            if TESTING:
-                if eyes_closed and eye_closed_start is None:
-                    eye_closed_start = time.time()
-                elif not eyes_closed:
-                    eye_closed_start = None
-
-            avg_ear = (left_ear + right_ear) / 2
+            # Debug info
+            print(f"L_EAR: {left_ear}, R_EAR: {right_ear}, avg: {avg_ear}, Eyes Closed: {eyes_closed}, Status: {status}, Pose: {distraction_status}")
 
         frame = draw_ui_overlay(frame, status, avg_ear, distraction_status)
-
-        if TESTING:
-            frame_count += 1
-            latency = (time.time() - frame_start_time) * 1000  # ms
-            if frame_count % 30 == 0:
-                elapsed = time.time() - start_time
-                fps = frame_count / elapsed
-                print(f"[TEST] FPS: {fps:.2f} | Frame latency: {latency:.2f} ms")
 
         cv2.imshow("Driver Monitor", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
