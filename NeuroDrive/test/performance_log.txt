@@ -1,0 +1,49 @@
+Day 3 – Bug Reporting & Re-Testing
+Device: Laptop Webcam
+Script: main.py (post-integration testing)
+Lighting Conditions: Bright & Dim
+Test Focus: Functional bug validation, retesting
+
+Observations:
+• Ran multiple real-time test scenarios
+• Reported bug to the team for code-level fix
+• Retested after fix — detection accuracy improved
+• Reported speaking/singing bug
+• Team is working on integrating head movement compensation to avoid false alerts
+
+Detection Status:
+• Eyes:  Fixed one-eye bug
+• Face:  Stable under varied angles
+
+Bugs / Issues Resolved:
+• False positive for one-eye closure
+• Detection stability improved under quick eye movements
+
+Bugs/Issues:
+False Drowsy detection when the subject is speaking or singing — under review
+
+Status:  Completed system-level retest | Bug fixes in progress
+
+
+[Day 4 – FPS & Regression Testing]
+Device: Laptop Webcam
+
+Script: main.py
+
+Lighting: Bright & Dim
+
+FPS Observed: ~27.8 FPS (average)
+
+Observations:
+• System maintained stable FPS in both lighting conditions
+• No major frame drops or UI lags
+• Retested all detection functions — consistent results
+• Minor bugs found and reported 
+Detection Status:
+• Eyes:  Responsive
+• Face:  Smooth under moderate movement
+
+ Bugs / Issues:
+• Minor flicker in UI overlay during quick head turns
+
+Status:  Final checks completed | Ready for Day-5 integration
