@@ -1,4 +1,35 @@
-Day 3 – Bug Reporting & Re-Testing
+[Day 1 – Webcam FPS Test]
+- Device: Laptop Webcam
+- Lighting 1 (Bright): 30.2 FPS (average)
+- Lighting 2 (Dim): 29.7 FPS (average)
+- Observations:
+  • No major FPS drop under dim lighting
+  • Startup dip (once): 4.90 FPS — ignored in avg
+  • Webcam runs smoothly and reliably
+- Status:  Ready for Day 2 tests
+
+
+[Day 2 – Face & Eye Detection Test]
+- Device: Laptop Webcam
+- Test Mode: Real-time detection using face_eye_detect.py
+- Lighting: Normal indoor lighting
+- Observations:
+  • Face and eye detection consistent in both lighting conditions
+  • Shows "Drowsy" if both eyes closed for more than 2 seconds
+  • Detection fails momentarily if face is turned >45°
+- Detection Status:
+  • Eyes:  Detected accurately
+  • Face:  Stable
+
+-  Bugs / Issues:
+  • Shows Drowsy even when one eye is closed(left eye)
+  • Detection skips frames if face is partially occluded (e.g., hand near face)
+  • No warnings when the face is not detected
+
+- Status:  Passed baseline detection tests; ready for Day 3 integration
+
+
+[Day 3 – Bug Reporting & Re-Testing]
 Device: Laptop Webcam
 Script: main.py (post-integration testing)
 Lighting Conditions: Bright & Dim
