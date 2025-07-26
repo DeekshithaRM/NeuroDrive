@@ -3,6 +3,15 @@ from detection.face_eye_detection import detect_face_landmarks
 from ui.overlay import draw_ui_overlay
 import pygame
 import os
+import time
+import argparse
+
+# -------------------- TEST MODE SETUP --------------------
+parser = argparse.ArgumentParser()
+parser.add_argument('--test', action='store_true', help="Enable testing logs (FPS, latency, drowsy trigger)")
+args = parser.parse_args()
+TESTING = args.test
+# --------------------------------------------------------
 
 def play_alarm():
     try:
@@ -36,11 +45,20 @@ def main():
     global closed_count, alarm_playing
     cap = cv2.VideoCapture(0)
 
+    # -------------------- TEST METRICS --------------------
+    frame_count = 0
+    start_time = time.time()
+    eye_closed_start = None
+    # ------------------------------------------------------
+
     while True:
         ret, frame = cap.read()
         if not ret:
             print("Failed to grab frame")
             break
+
+        if TESTING:
+            frame_start_time = time.time()
 
         overlay = frame.copy()
         frame, left_ear, right_ear, distraction_status = detect_face_landmarks(overlay)
@@ -60,14 +78,35 @@ def main():
                 if not alarm_playing:
                     play_alarm()
                     alarm_playing = True
+
+                if TESTING and eye_closed_start is not None:
+                    drowsy_delay = time.time() - eye_closed_start
+                    print(f"[TEST] Drowsy triggered after {drowsy_delay:.2f} seconds")
+                    eye_closed_start = None  # Reset after trigger
+
             else:
                 if alarm_playing:
                     stop_alarm()
                     alarm_playing = False
 
+            # Track when eyes first close (for drowsy timing)
+            if TESTING:
+                if eyes_closed and eye_closed_start is None:
+                    eye_closed_start = time.time()
+                elif not eyes_closed:
+                    eye_closed_start = None
+
             avg_ear = (left_ear + right_ear) / 2
 
         frame = draw_ui_overlay(frame, status, avg_ear, distraction_status)
+
+        if TESTING:
+            frame_count += 1
+            latency = (time.time() - frame_start_time) * 1000  # ms
+            if frame_count % 30 == 0:
+                elapsed = time.time() - start_time
+                fps = frame_count / elapsed
+                print(f"[TEST] FPS: {fps:.2f} | Frame latency: {latency:.2f} ms")
 
         cv2.imshow("Driver Monitor", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
