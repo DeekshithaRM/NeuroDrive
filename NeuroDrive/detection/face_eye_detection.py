@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 import math
 import numpy as np
+from collections import deque
 
 # Initialize MediaPipe
 mp_face_mesh = mp.solutions.face_mesh
@@ -31,6 +32,18 @@ MODEL_POINTS = np.array([
     (0.0, 60.0, -30.0)       # Chin
 ])
 
+# Thresholds
+YAW_THRESHOLD = 25
+PITCH_THRESHOLD = 15
+UPWARD_PITCH_THRESHOLD = -10
+
+# Pose smoothing history
+pose_history = deque(maxlen=5)
+
+def smooth_pose_status(current_status, history):
+    history.append(current_status)
+    return max(set(history), key=history.count)
+
 def euclidean(p1, p2):
     return math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2)
 
@@ -46,7 +59,6 @@ def get_ear(landmarks):
 def get_head_pose_angles(frame, landmarks):
     h, w = frame.shape[:2]
 
-    # 2D image points
     image_points = np.array([
         [landmarks[1].x * w, landmarks[1].y * h],     # Nose tip
         [landmarks[33].x * w, landmarks[33].y * h],   # Left eye
@@ -64,19 +76,26 @@ def get_head_pose_angles(frame, landmarks):
         [0, 0, 1]
     ], dtype="double")
 
-    dist_coeffs = np.zeros((4, 1))  # Assume no lens distortion
+    dist_coeffs = np.zeros((4, 1))
 
     success, rotation_vector, translation_vector = cv2.solvePnP(
         MODEL_POINTS, image_points, camera_matrix, dist_coeffs
     )
 
     if not success:
-        return 0, 0, 0  # fallback
+        return 0, 0, 0
 
     rmat, _ = cv2.Rodrigues(rotation_vector)
     angles, _, _, _, _, _ = cv2.RQDecomp3x3(rmat)
 
-    return angles[0], angles[1], angles[2]  # pitch, yaw, roll
+    pitch, yaw, roll = angles
+
+    # Clamp angles to avoid spikes
+    pitch = max(-90, min(90, pitch))
+    yaw = max(-90, min(90, yaw))
+    roll = max(-90, min(90, roll))
+
+    return pitch, yaw, roll
 
 def detect_face_landmarks(frame):
     h, w = frame.shape[:2]
@@ -98,7 +117,6 @@ def detect_face_landmarks(frame):
                 drawing_spec
             )
 
-            # Compute EARs
             try:
                 left = [landmarks.landmark[i] for i in LEFT_EYE]
                 left_ear = (euclidean(left[1], left[5]) + euclidean(left[2], left[4])) / (2.0 * euclidean(left[0], left[3]))
@@ -113,29 +131,53 @@ def detect_face_landmarks(frame):
             except Exception:
                 right_ear = None
 
-            # Calculate average EAR only if valid
             valid_ears = [ear for ear in [left_ear, right_ear] if ear is not None]
             if valid_ears:
                 avg_ear = round(sum(valid_ears) / len(valid_ears), 3)
 
-            # EAR overlay
+            # EAR display
             cv2.putText(frame, f"L: {left_ear} R: {right_ear}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
-            # Head pose estimation
+            # Head pose
             pitch, yaw, roll = get_head_pose_angles(frame, landmarks.landmark)
 
-            if abs(yaw) > 15:
-                distraction_status = "Looking Sideways"
-            elif pitch > 10:
-                distraction_status = "Looking Down"
+            # Distraction detection with new thresholds
+            if yaw < -YAW_THRESHOLD:
+                distraction_status_raw = "Looking Right"
+            elif yaw > YAW_THRESHOLD:
+                distraction_status_raw = "Looking Left"
+            elif pitch > PITCH_THRESHOLD:
+                distraction_status_raw = "Looking Down"
+            elif pitch < UPWARD_PITCH_THRESHOLD:
+                distraction_status_raw = "Looking Up"
             else:
-                distraction_status = "Looking Forward"
+                distraction_status_raw = "Looking Forward"
 
-            # Display angles and status
+            distraction_status = smooth_pose_status(distraction_status_raw, pose_history)
+
+            # Draw direction arrow
+            draw_head_direction_arrow(frame, yaw, pitch)
+
             cv2.putText(frame, f"Yaw: {round(yaw,1)} Pitch: {round(pitch,1)}",
                         (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 255), 2)
             cv2.putText(frame, f"Pose: {distraction_status}", (10, 90),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
 
     return frame, left_ear, right_ear, avg_ear, distraction_status
+
+def draw_head_direction_arrow(frame, yaw, pitch):
+    h, w = frame.shape[:2]
+    center = (w // 2, h // 2)
+
+    # Length and direction
+    length = 100
+    dx = int(length * np.sin(np.radians(yaw)))
+    dy = int(length * np.sin(np.radians(pitch)))
+
+    end_point = (center[0] + dx, center[1] - dy)
+
+    # Draw the arrow
+    color = (0, 255, 0) if -YAW_THRESHOLD < yaw < YAW_THRESHOLD and UPWARD_PITCH_THRESHOLD < pitch < PITCH_THRESHOLD else (0, 0, 255)
+    cv2.arrowedLine(frame, center, end_point, color, 4, tipLength=0.3)
+    cv2.circle(frame, center, 5, (255, 0, 0), -1)

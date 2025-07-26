@@ -4,6 +4,14 @@ from ui.overlay import draw_ui_overlay
 import pygame
 import os
 
+pose_history = []
+def smooth_pose_status(new_status, history, window=5):
+    history.append(new_status)
+    if len(history) > window:
+        history.pop(0)
+    # Return most frequent recent status
+    return max(set(history), key=history.count)
+
 def play_alarm():
     try:
         pygame.mixer.init()
@@ -44,7 +52,9 @@ def main():
             break
 
         overlay = frame.copy()
-        frame, left_ear, right_ear, avg_ear, distraction_status = detect_face_landmarks(overlay)
+        frame, left_ear, right_ear, avg_ear, distraction_status_raw = detect_face_landmarks(overlay)
+        distraction_status = smooth_pose_status(distraction_status_raw, pose_history)
+
 
         if left_ear is None or right_ear is None:
             status = "No Face Detected"
