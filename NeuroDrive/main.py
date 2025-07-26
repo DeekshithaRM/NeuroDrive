@@ -44,7 +44,7 @@ def main():
             break
 
         overlay = frame.copy()
-        frame, left_ear, right_ear, distraction_status = detect_face_landmarks(overlay)
+        frame, left_ear, right_ear, avg_ear, distraction_status = detect_face_landmarks(overlay)
 
         if left_ear is None or right_ear is None:
             status = "No Face Detected"
