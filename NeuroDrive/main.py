@@ -15,7 +15,8 @@ def play_alarm():
         print("Failed to play alarm:", e)
 
 def stop_alarm():
-    pygame.mixer.music.stop()
+    if pygame.mixer.get_init():
+        pygame.mixer.music.stop()
 
 CLOSED_EAR_THRESHOLD = 0.25
 CONSEC_FRAMES_THRESHOLD = 20
@@ -48,11 +49,13 @@ def main():
         if left_ear is None or right_ear is None:
             status = "No Face Detected"
             avg_ear = None
+            distraction_status = "No Face Detected"
 
             if not alarm_playing:
                 play_alarm()
                 alarm_playing = True
         else:
+            avg_ear = (left_ear + right_ear) / 2
             eyes_closed = left_ear < CLOSED_EAR_THRESHOLD and right_ear < CLOSED_EAR_THRESHOLD
             status, closed_count = get_driver_status(eyes_closed, closed_count)
 
@@ -65,7 +68,8 @@ def main():
                     stop_alarm()
                     alarm_playing = False
 
-            avg_ear = (left_ear + right_ear) / 2
+            # Debug info
+            print(f"L_EAR: {left_ear}, R_EAR: {right_ear}, avg: {avg_ear}, Eyes Closed: {eyes_closed}, Status: {status}, Pose: {distraction_status}")
 
         frame = draw_ui_overlay(frame, status, avg_ear, distraction_status)
 

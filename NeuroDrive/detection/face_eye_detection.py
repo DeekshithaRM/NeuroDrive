@@ -83,8 +83,9 @@ def detect_face_landmarks(frame):
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results = face_mesh.process(rgb_frame)
 
-    left_ear = None  # <-- initialize safely
+    left_ear = None
     right_ear = None
+    avg_ear = None
     distraction_status = "No Face Detected"
 
     if results.multi_face_landmarks:
@@ -97,22 +98,31 @@ def detect_face_landmarks(frame):
                 drawing_spec
             )
 
-            # Compute EARs separately
-            left = [landmarks.landmark[i] for i in LEFT_EYE]
-            right = [landmarks.landmark[i] for i in RIGHT_EYE]
+            # Compute EARs
+            try:
+                left = [landmarks.landmark[i] for i in LEFT_EYE]
+                left_ear = (euclidean(left[1], left[5]) + euclidean(left[2], left[4])) / (2.0 * euclidean(left[0], left[3]))
+                left_ear = round(left_ear, 3)
+            except Exception:
+                left_ear = None
 
-            left_ear = (euclidean(left[1], left[5]) + euclidean(left[2], left[4])) / (2.0 * euclidean(left[0], left[3]))
-            right_ear = (euclidean(right[1], right[5]) + euclidean(right[2], right[4])) / (2.0 * euclidean(right[0], right[3]))
+            try:
+                right = [landmarks.landmark[i] for i in RIGHT_EYE]
+                right_ear = (euclidean(right[1], right[5]) + euclidean(right[2], right[4])) / (2.0 * euclidean(right[0], right[3]))
+                right_ear = round(right_ear, 3)
+            except Exception:
+                right_ear = None
 
-            # Optional rounding
-            left_ear = round(left_ear, 3)
-            right_ear = round(right_ear, 3)
+            # Calculate average EAR only if valid
+            valid_ears = [ear for ear in [left_ear, right_ear] if ear is not None]
+            if valid_ears:
+                avg_ear = round(sum(valid_ears) / len(valid_ears), 3)
 
             # EAR overlay
             cv2.putText(frame, f"L: {left_ear} R: {right_ear}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
-            # Head pose
+            # Head pose estimation
             pitch, yaw, roll = get_head_pose_angles(frame, landmarks.landmark)
 
             if abs(yaw) > 15:
@@ -122,10 +132,10 @@ def detect_face_landmarks(frame):
             else:
                 distraction_status = "Looking Forward"
 
-            # Show on frame
+            # Display angles and status
             cv2.putText(frame, f"Yaw: {round(yaw,1)} Pitch: {round(pitch,1)}",
                         (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 255), 2)
             cv2.putText(frame, f"Pose: {distraction_status}", (10, 90),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
 
-    return frame, left_ear, right_ear, distraction_status
+    return frame, left_ear, right_ear, avg_ear, distraction_status
