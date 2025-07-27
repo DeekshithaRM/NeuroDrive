@@ -78,3 +78,39 @@ Detection Status:
 • Minor flicker in UI overlay during quick head turns
 
 Status:  Final checks completed | Ready for Day-5 integration
+
+
+[Day 5 – Trigger Timing testing]
+
+Device: Laptop Webcam + Sample Videos
+Script: main.py
+Lighting: Standard Indoor
+FPS Observed: ~28.1 FPS (average)
+Latency: ~25 ms/frame
+
+Lighting: Dim
+FPS Observed: ~27.3 FPS
+Latency: ~24.9 ms (average)
+
+Sample videos:
+• FPS observed: ~46.6 FPS
+• Latency : ~26.94 ms
+
+
+Observations:
+• Tested across real video scenarios + live webcam
+• Dim and normal lighting tested
+• Eye closure thresholds and timing logic verified
+• Trigger time (when drowsiness starts) is now correctly recorded
+• System stable with real-time webcam input
+• Regression-tested FPS and latency in realistic dim-light use cases
+• System reliably triggers alert after 0.6–0.7 seconds of continuous eye closure
+
+
+Bugs / Issues Reported to Team:
+• Face detection failing in 2 out of 3 test video snippets
+• Frame rate and latency stable under low light
+
+Status:
+Field testing in realistic video scenarios completed
+Low quality video cases reported to dev team for review
