@@ -3,8 +3,16 @@ import mediapipe as mp
 import math
 import numpy as np
 from collections import deque
+import logging
 
-# Initialize MediaPipe
+# Logging Setup
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Initialize MediaPipe Face Mesh
 mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(
     static_image_mode=False,
@@ -40,12 +48,15 @@ UPWARD_PITCH_THRESHOLD = -10
 # Pose smoothing history
 pose_history = deque(maxlen=5)
 
+
 def smooth_pose_status(current_status, history):
     history.append(current_status)
     return max(set(history), key=history.count)
 
+
 def euclidean(p1, p2):
     return math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2)
+
 
 def get_ear(landmarks):
     left = [landmarks[i] for i in LEFT_EYE]
@@ -55,6 +66,7 @@ def get_ear(landmarks):
     right_ear = (euclidean(right[1], right[5]) + euclidean(right[2], right[4])) / (2.0 * euclidean(right[0], right[3]))
 
     return left_ear, right_ear
+
 
 def get_head_pose_angles(frame, landmarks):
     h, w = frame.shape[:2]
@@ -83,6 +95,7 @@ def get_head_pose_angles(frame, landmarks):
     )
 
     if not success:
+        logger.warning("solvePnP failed to estimate head pose.")
         return 0, 0, 0
 
     rmat, _ = cv2.Rodrigues(rotation_vector)
@@ -90,12 +103,12 @@ def get_head_pose_angles(frame, landmarks):
 
     pitch, yaw, roll = angles
 
-    # Clamp angles to avoid spikes
     pitch = max(-90, min(90, pitch))
     yaw = max(-90, min(90, yaw))
     roll = max(-90, min(90, roll))
 
     return pitch, yaw, roll
+
 
 def detect_face_landmarks(frame):
     h, w = frame.shape[:2]
@@ -135,14 +148,13 @@ def detect_face_landmarks(frame):
             if valid_ears:
                 avg_ear = round(sum(valid_ears) / len(valid_ears), 3)
 
-            # EAR display
+            logger.info(f"Detected face. Left EAR: {left_ear}, Right EAR: {right_ear}, Avg EAR: {avg_ear}")
+
             cv2.putText(frame, f"L: {left_ear} R: {right_ear}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
-            # Head pose
             pitch, yaw, roll = get_head_pose_angles(frame, landmarks.landmark)
 
-            # Distraction detection with new thresholds
             if yaw < -YAW_THRESHOLD:
                 distraction_status_raw = "Looking Right"
             elif yaw > YAW_THRESHOLD:
@@ -155,29 +167,30 @@ def detect_face_landmarks(frame):
                 distraction_status_raw = "Looking Forward"
 
             distraction_status = smooth_pose_status(distraction_status_raw, pose_history)
+            logger.info(f"Distraction detected: {distraction_status}")
 
-            # Draw direction arrow
             draw_head_direction_arrow(frame, yaw, pitch)
 
             cv2.putText(frame, f"Yaw: {round(yaw,1)} Pitch: {round(pitch,1)}",
                         (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 255), 2)
             cv2.putText(frame, f"Pose: {distraction_status}", (10, 90),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+    else:
+        logger.warning("No face detected in this frame.")
 
     return frame, left_ear, right_ear, avg_ear, distraction_status
+
 
 def draw_head_direction_arrow(frame, yaw, pitch):
     h, w = frame.shape[:2]
     center = (w // 2, h // 2)
 
-    # Length and direction
     length = 100
     dx = int(length * np.sin(np.radians(yaw)))
     dy = int(length * np.sin(np.radians(pitch)))
 
     end_point = (center[0] + dx, center[1] - dy)
 
-    # Draw the arrow
     color = (0, 255, 0) if -YAW_THRESHOLD < yaw < YAW_THRESHOLD and UPWARD_PITCH_THRESHOLD < pitch < PITCH_THRESHOLD else (0, 0, 255)
     cv2.arrowedLine(frame, center, end_point, color, 4, tipLength=0.3)
     cv2.circle(frame, center, 5, (255, 0, 0), -1)
