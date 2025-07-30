@@ -52,13 +52,16 @@ def get_driver_status(eyes_closed, closed_count):
 def main():
     global closed_count, alarm_playing
 
-    cap = cv2.VideoCapture('media/sample 1_drowsy.mp4')
+    cap = cv2.VideoCapture(0)
 
     if not cap.isOpened():
         logger.error("Camera not accessible.")
         return
     prev_time = time.time()
     trigger_start_time = None
+    fps_list = []
+    latency_list = []
+
 
 
     while True:
@@ -74,6 +77,9 @@ def main():
         overlay = frame.copy()
         annotated_frame, left_ear, right_ear, avg_ear, distraction_status = detect_face_landmarks(overlay)
         latency = (time.time() - start_time) * 1000  # in milliseconds
+        fps_list.append(fps)
+        latency_list.append(latency)
+
 
 
         if avg_ear is None:
@@ -117,6 +123,12 @@ def main():
     cap.release()
     cv2.destroyAllWindows()
     stop_alarm()
+    if fps_list and latency_list:
+        avg_fps = sum(fps_list) / len(fps_list)
+        avg_latency = sum(latency_list) / len(latency_list)
+        logger.info(f"📊 Average FPS: {avg_fps:.2f}")
+        logger.info(f"📊 Average Latency: {avg_latency:.2f} ms")
+
 
 if __name__ == "__main__":
     main()
