@@ -1,0 +1,145 @@
+[Day 1 – Webcam FPS Test]
+- Device: Laptop Webcam
+- Lighting 1 (Bright): 30.2 FPS (average)
+- Lighting 2 (Dim): 29.7 FPS (average)
+- Observations:
+  • No major FPS drop under dim lighting
+  • Startup dip (once): 4.90 FPS — ignored in avg
+  • Webcam runs smoothly and reliably
+- Status:  Ready for Day 2 tests
+
+
+[Day 2 – Face & Eye Detection Test]
+- Device: Laptop Webcam
+- Test Mode: Real-time detection using face_eye_detect.py
+- Lighting: Normal indoor lighting
+- Observations:
+  • Face and eye detection consistent in both lighting conditions
+  • Shows "Drowsy" if both eyes closed for more than 2 seconds
+  • Detection fails momentarily if face is turned >45°
+- Detection Status:
+  • Eyes:  Detected accurately
+  • Face:  Stable
+-  Bugs / Issues:
+  • Shows Drowsy even when one eye is closed(left eye)
+  • Detection skips frames if face is partially occluded (e.g., hand near face)
+  • No warnings when the face is not detected
+
+- Status:  Passed baseline detection tests; ready for Day 3 integration
+
+
+
+[Day 3 – Bug Reporting & Re-Testing]
+Device: Laptop Webcam
+Script: main.py (post-integration testing)
+Lighting Conditions: Bright & Dim
+Test Focus: Functional bug validation, retesting
+
+Observations:
+• Ran multiple real-time test scenarios
+• Reported bug to the team for code-level fix
+• Retested after fix — detection accuracy improved
+• Reported speaking/singing bug
+• Team is working on integrating head movement compensation to avoid false alerts
+
+Detection Status:
+• Eyes:  Fixed one-eye bug
+• Face:  Stable under varied angles
+
+Bugs / Issues Resolved:
+• False positive for one-eye closure
+• Detection stability improved under quick eye movements
+
+Bugs/Issues:
+False Drowsy detection when the subject is speaking or singing — under review
+
+Status:  Completed system-level retest | Bug fixes in progress
+
+
+
+[Day 4 – FPS & Regression Testing]
+Device: Laptop Webcam
+Script: main.py
+Lighting: Bright & Dim
+FPS Observed: ~27.8 FPS (average)
+
+Observations:
+• System maintained stable FPS in both lighting conditions
+• No major frame drops or UI lags
+• Retested all detection functions — consistent results
+• Minor bugs found and reported 
+Detection Status:
+• Eyes:  Responsive
+• Face:  Smooth under moderate movement
+
+ Bugs / Issues:
+• Minor flicker in UI overlay during quick head turns
+
+Status:  Final checks completed | Ready for Day-5 integration
+
+
+
+[Day 5 – Trigger Timing testing]
+
+Device: Laptop Webcam + Sample Videos
+Script: main.py
+Lighting: Standard Indoor
+FPS Observed: ~28.1 FPS (average)
+Latency: ~25 ms/frame
+
+Lighting: Dim
+FPS Observed: ~27.3 FPS
+Latency: ~24.9 ms (average)
+
+Sample videos:
+• FPS observed: ~46.6 FPS
+• Latency : ~26.94 ms
+
+Observations:
+• Tested across real video scenarios + live webcam
+• Dim and normal lighting tested
+• Eye closure thresholds and timing logic verified
+• Trigger time (when drowsiness starts) is now correctly recorded
+• System stable with real-time webcam input
+• Regression-tested FPS and latency in realistic dim-light use cases
+• System reliably triggers alert after 0.6–0.7 seconds of continuous eye closure
+• Frame rate and latency stable under low light
+
+Status:
+Field testing in realistic video scenarios completed
+Ready for Day 6 full-system evaluation
+
+[Day 6 – Performance Evaluation & Distraction Detection]
+
+Device: Laptop Webcam + Sample Videos
+Script: main.py (Distraction detection module integrated)
+Lighting: Normal Indoor light conditions
+Testing Type: Real-time and sample video distraction logging
+
+Webcam Input:
+•  Average FPS: 33.21
+•  Average Latency: 21.72 ms/frame
+
+Sample Video Input:
+•  Average FPS: 32.15
+•  Average Latency: 26.18 ms/frame
+•  Minor variation in latency due to frame decoding
+
+Final Observations:
+• No major FPS drops observed under any test case
+• Latency remains within acceptable bounds (below 30ms)
+• Average time taken to trigger drowsiness: 0.50 seconds  
+• Logging is real-time
+• Duplicate logging issue (e.g., trigger time printed twice) resolved in final version
+• All thresholds (drowsy triggers, distraction detection) verified
+• Distraction (Looking Left/Right/Down) detected accurately in most frames
+• Pose updates logged in real-time with minimal delay
+• EAR values stable and responsive
+• Eye status detection (open/closed) consistent and precise
+• No overlap between drowsy and distraction alerts
+
+Status:
+• System shows stable real-time performance
+• Testing Completed
+• Final performance confirmed across all test modes
+• Ready for project closure, documentation, or demo
