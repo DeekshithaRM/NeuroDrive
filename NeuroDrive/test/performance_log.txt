@@ -134,6 +134,7 @@ Final Observations:
 • Latency remains within acceptable bounds (below 30ms)
 • Average time taken to trigger drowsiness: 0.50 seconds  
 • Logging is real-time
+• Duplicate logging issue (e.g., trigger time printed twice) resolved in final version
 • All thresholds (drowsy triggers, distraction detection) verified
 • Distraction (Looking Left/Right/Down) detected accurately in most frames
 • Pose updates logged in real-time with minimal delay
