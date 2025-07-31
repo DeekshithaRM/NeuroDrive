@@ -25,7 +25,20 @@ The system processes each video frame to:
 ## Usage
 
 ### 1. Clone the Repo
+  ```bash
+  git clone https://github.com/your-username/NeuroDrive.git
+  cd NeuroDrive
 
-```bash
-git clone https://github.com/your-username/NeuroDrive.git
-cd NeuroDrive
+### 2. Install Dependencies
+  ```bash
+  pip install -r requirements.txt
+
+## Logs
+- Saved in the logs/ folder
+- Includes EAR values, head pose angles, and distraction state
+- Useful for performance evaluation or future ML models
+
+## Testing Samples
+Add your own sample videos to media/ folder, or use:
+- sample2_normal.mp4 → alert driver
+- sample3_drowsy.mp4 → eyes closed scenario
