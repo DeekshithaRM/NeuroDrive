@@ -21,17 +21,17 @@ The system processes each video frame to:
 4. Determine attention state: Awake / Distracted.
 5. Overlay results on the video + log significant events.
 
-
 ## Usage
 
 ### 1. Clone the Repo
   ```bash
   git clone https://github.com/your-username/NeuroDrive.git
   cd NeuroDrive
-
+```
 ### 2. Install Dependencies
   ```bash
   pip install -r requirements.txt
+```
 
 ## Logs
 - Saved in the logs/ folder
