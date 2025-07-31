@@ -50,7 +50,7 @@ def get_driver_status(eyes_closed, closed_count):
 def main():
     global closed_count, alarm_playing
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(0) # 0 for default camera
 
     if not cap.isOpened():
         logger.error("Camera not accessible.")
