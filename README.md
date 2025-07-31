@@ -9,7 +9,6 @@
 - **Head Pose Estimation** (Yaw, Pitch, Roll)
 - **Distraction Detection** (Looking Left/Right/Up/Down)
 - **Logging Support** (Event logs, EAR values, pose info)
-- **Modular Codebase** (`modules/` structure)
 - **Video File or Webcam Support**
 
 ## How It Works
